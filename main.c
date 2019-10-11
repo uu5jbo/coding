@@ -11,9 +11,9 @@
    ID:                 $Id:  $
 
 **********************************************************************/
-#include "stm32f10x_conf.h"
+//#include "stm32f10x_conf.h"
 #include "spi.h"
-#include "spi.c"
+//#include "spi.c"
 
 uint8_t txbuf[4], rxbuf[4];
 uint16_t txbuf16[4], rxbuf16[4];
