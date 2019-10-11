@@ -10,11 +10,11 @@ static const uint16_t speeds [] =
 
 void csInit(void)
 {
+    // SS Chip select
     RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
 
     GPIOC->CRL |= GPIO_CRL_MODE3;
     GPIOC->CRL &= ~GPIO_CRL_CNF3;   // Output PP 50Mhz
-
     GPIOC->BSRR |= GPIO_BSRR_BS3; // Set High on PC3
 }
 
@@ -29,19 +29,25 @@ void spiInit(SPI_TypeDef *SPIx)
         RCC->APB2ENR |= RCC_APB2ENR_IOPBEN; // Clock to GPIO Port B
         RCC->APB2ENR |= RCC_APB1ENR_SPI2EN;  //Clock to SPI2 Module on APB1 bus
 
+        RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // Clock to alternative functions
+
+        //SCK
         GPIOB->CRH |= GPIO_CRH_MODE13; // Output 50 MHz
-        GPIOB->CRH |= GPIO_CRH_CNF13_1;
-        GPIOB->CRH &= ~GPIO_CRH_CNF13_0; // PB13 Alternat. func, PP
+        GPIOB->CRH &= ~GPIO_CRH_CNF13;  //Reset both bits
+        GPIOB->CRH |= GPIO_CRH_CNF13_1; // PB13 Alternat. func, PP
 
+        //MOSI
         GPIOB->CRH |= GPIO_CRH_MODE15; // Output 50 MHz
-        GPIOB->CRH |= GPIO_CRH_CNF15_1;
-        GPIOB->CRH &= ~GPIO_CRH_CNF15_0; // PB15 Alternat. func, PP
+        GPIOB->CRH &= ~GPIO_CRH_CNF15;  //Reset both bits
+        GPIOB->CRH |= GPIO_CRH_CNF15_1; // PB13 Alternat. func, PP
 
+        //MISO
+        GPIOB->CRH &= ~GPIO_CRH_MODE14;
         GPIOB->CRH &= ~GPIO_CRH_CNF14;
-        GPIOB->CRH |= GPIO_CRH_CNF14_1; // PB14 Input Pull up/down
-        GPIOB->ODR |= GPIO_ODR_ODR14; // PB14 Pull Up
+        GPIOB->CRH |= GPIO_CRH_CNF14_1;  // PB14 Input Pull up/down
+        GPIOB->BSRR = GPIO_BSRR_BS14;    // PB14 Pull Up
 
-                /* Enable clocks , configure pins
+        /* Enable clocks , configure pins
         ...
         */
     }
@@ -88,7 +94,7 @@ int spiReadWrite(SPI_TypeDef* SPIx, uint8_t *rbuf,
 }
 
 int spiReadWrite16(SPI_TypeDef* SPIx, uint16_t *rbuf,
-                 const uint16_t *tbuf, int cnt, enum spiSpeed speed)
+                   const uint16_t *tbuf, int cnt, enum spiSpeed speed)
 {
     int i;
 
