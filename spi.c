@@ -8,6 +8,7 @@ static const uint16_t speeds [] =
     [SPI_FAST] = SPI_BaudRatePrescaler_2
 };
 
+/*
 void csInit(void)
 {
     // SS Chip select
@@ -16,9 +17,9 @@ void csInit(void)
     GPIOC->CRL |= GPIO_CRL_MODE3;
     GPIOC->CRL &= ~GPIO_CRL_CNF3;   // Output PP 50Mhz
     GPIOC->BSRR |= GPIO_BSRR_BS3; // Set High on PC3
-    */
+    */ /*
     __NOP();
-}
+} */
 
 void spiInit(SPI_TypeDef *SPIx)
 {
@@ -46,7 +47,7 @@ void spiInit(SPI_TypeDef *SPIx)
         //MOSI
         GPIOB->CRH |= GPIO_CRH_MODE15; // Output 50 MHz
         GPIOB->CRH &= ~GPIO_CRH_CNF15;  //Reset both bits
-        GPIOB->CRH |= GPIO_CRH_CNF15_1; // PB13 Alternat. func, PP
+        GPIOB->CRH |= GPIO_CRH_CNF15_1; // PB15 Alternat. func, PP
 
         //MISO
         GPIOB->CRH &= ~GPIO_CRH_MODE14;
