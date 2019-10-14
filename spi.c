@@ -11,11 +11,13 @@ static const uint16_t speeds [] =
 void csInit(void)
 {
     // SS Chip select
+    /*
     RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
-
     GPIOC->CRL |= GPIO_CRL_MODE3;
     GPIOC->CRL &= ~GPIO_CRL_CNF3;   // Output PP 50Mhz
     GPIOC->BSRR |= GPIO_BSRR_BS3; // Set High on PC3
+    */
+    __NOP();
 }
 
 void spiInit(SPI_TypeDef *SPIx)
@@ -30,6 +32,11 @@ void spiInit(SPI_TypeDef *SPIx)
         RCC->APB2ENR |= RCC_APB1ENR_SPI2EN;  //Clock to SPI2 Module on APB1 bus
 
         RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // Clock to alternative functions
+        // SS Chip select
+        RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+        GPIOC->CRL |= GPIO_CRL_MODE3;
+        GPIOC->CRL &= ~GPIO_CRL_CNF3;   // Output PP 50Mhz
+        GPIOC->BSRR |= GPIO_BSRR_BS3; // Set High on PC3
 
         //SCK
         GPIOB->CRH |= GPIO_CRH_MODE13; // Output 50 MHz
@@ -51,10 +58,34 @@ void spiInit(SPI_TypeDef *SPIx)
         ...
         */
     }
-    else
+    else if (SPIx == SPI1)
     {
-        return;
+        //Включаем тактирование SPI1 и GPIOA
+        RCC->APB2ENR |= RCC_APB2ENR_SPI1EN | RCC_APB2ENR_IOPAEN;
+        RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; //Clk to alternative fncs.
+
+        //вывод управления SS: выход двухтактный, общего назначения,50MHz                             /
+        GPIOA->CRL   |=  GPIO_CRL_MODE4;    //  PA4
+        GPIOA->CRL   &= ~GPIO_CRL_CNF4;     //
+        GPIOA->BSRR   =  GPIO_BSRR_BS4;     //
+
+        //вывод SCK: выход двухтактный, альтернативная функция, 50MHz
+        GPIOA->CRL   |=  GPIO_CRL_MODE5;    //  PA5
+        GPIOA->CRL   &= ~GPIO_CRL_CNF5;     //
+        GPIOA->CRL   |=  GPIO_CRL_CNF5_1;   //
+
+        //вывод MISO: вход цифровой с подтягивающим резистором, подтяжка к плюсу
+        GPIOA->CRL   &= ~GPIO_CRL_MODE6;    //  PA6
+        GPIOA->CRL   &= ~GPIO_CRL_CNF6;     //
+        GPIOA->CRL   |=  GPIO_CRL_CNF6_1;   //
+        GPIOA->BSRR   =  GPIO_BSRR_BS6;     //
+
+        //вывод MOSI: выход двухтактный, альтернативная функция, 50MHz
+        GPIOA->CRL   |=  GPIO_CRL_MODE7;    //  PA7
+        GPIOA->CRL   &= ~GPIO_CRL_CNF7;     //
+        GPIOA->CRL   |=  GPIO_CRL_CNF7_1;   //
     }
+
     SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
     SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
     SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
@@ -123,3 +154,15 @@ int spiReadWrite16(SPI_TypeDef* SPIx, uint16_t *rbuf,
     return i;
 }
 
+void spi_send(SPI_TypeDef* SPIx, uint8_t data, uint8_t *rbuf,
+              enum spiSpeed speed)
+{
+
+    SPIx->CR1 = (SPIx->CR1 & ~SPI_BaudRatePrescaler_256) |
+                speeds[speed];      //Выбираем делитель SPI
+
+    SPIx->DR = data;       //загружаем данные для передачи
+    while (!(SPIx->SR & SPI_SR_TXE));   //ожидание окончания передачи
+    *rbuf =  SPIx->DR;     //читаем принятые данные
+
+}
