@@ -60,27 +60,27 @@ void spiInit(SPI_TypeDef *SPIx)
     }
     else if (SPIx == SPI1)
     {
-        //Включаем тактирование SPI1 и GPIOA
+        //Clock to SPI1 and GPIOA
         RCC->APB2ENR |= RCC_APB2ENR_SPI1EN | RCC_APB2ENR_IOPAEN;
         RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; //Clk to alternative fncs.
 
-        //вывод управления SS: выход двухтактный, общего назначения,50MHz                             /
+        //Slave Select SS: Out, PP, 50MHz                             /
         GPIOA->CRL   |=  GPIO_CRL_MODE4;    //  PA4
         GPIOA->CRL   &= ~GPIO_CRL_CNF4;     //
         GPIOA->BSRR   =  GPIO_BSRR_BS4;     //
 
-        //вывод SCK: выход двухтактный, альтернативная функция, 50MHz
+        //SCK: PP, alternative function, 50MHz
         GPIOA->CRL   |=  GPIO_CRL_MODE5;    //  PA5
         GPIOA->CRL   &= ~GPIO_CRL_CNF5;     //
         GPIOA->CRL   |=  GPIO_CRL_CNF5_1;   //
 
-        //вывод MISO: вход цифровой с подтягивающим резистором, подтяжка к плюсу
+        //вывод MISO: Input Pull-Up.
         GPIOA->CRL   &= ~GPIO_CRL_MODE6;    //  PA6
         GPIOA->CRL   &= ~GPIO_CRL_CNF6;     //
         GPIOA->CRL   |=  GPIO_CRL_CNF6_1;   //
         GPIOA->BSRR   =  GPIO_BSRR_BS6;     //
 
-        //вывод MOSI: выход двухтактный, альтернативная функция, 50MHz
+        //вывод MOSI: OUT Push-Pull, alternative function, 50MHz
         GPIOA->CRL   |=  GPIO_CRL_MODE7;    //  PA7
         GPIOA->CRL   &= ~GPIO_CRL_CNF7;     //
         GPIOA->CRL   |=  GPIO_CRL_CNF7_1;   //
@@ -159,10 +159,10 @@ void spi_send(SPI_TypeDef* SPIx, uint8_t data, uint8_t *rbuf,
 {
 
     SPIx->CR1 = (SPIx->CR1 & ~SPI_BaudRatePrescaler_256) |
-                speeds[speed];      //Выбираем делитель SPI
+                speeds[speed];      //Choose prescaler SPI
 
-    SPIx->DR = data;       //загружаем данные для передачи
-    while (!(SPIx->SR & SPI_SR_TXE));   //ожидание окончания передачи
-    *rbuf =  SPIx->DR;     //читаем принятые данные
+    SPIx->DR = data;       //data to transmit
+    while (!(SPIx->SR & SPI_SR_TXE));   //waiting for TX to finish
+    *rbuf =  SPIx->DR;     //reading data
 
 }
